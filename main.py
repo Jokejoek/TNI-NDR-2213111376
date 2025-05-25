@@ -66,10 +66,22 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Display title and table
+# Display title
+
+
 st.title("📊 PTT stock data analysis")
 st.subheader("First 5 rows")
-st.dataframe(df.head())
+
+# Select how many row to display
+howmanyrow = st.selectbox("Select how many row to Display", ["5", "20", "30","All"])
+if howmanyrow == "5":
+    st.dataframe(df.head(5))
+elif howmanyrow == "20":
+    st.dataframe(df.head(20))
+elif howmanyrow == "30":
+    st.dataframe(df.head(30))
+elif howmanyrow == "All":
+    st.dataframe(df)
 
 
 
