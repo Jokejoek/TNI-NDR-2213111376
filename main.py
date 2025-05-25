@@ -5,6 +5,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 import plotly.express as px
 from datetime import datetime
+import plotly.graph_objects as go
 
 # Mapping Thai month abbreviations to numbers
 thai_month_map = {
@@ -82,21 +83,43 @@ model = LinearRegression()
 model.fit(X, y)
 trend = model.predict(X)
 
-# Create Matplotlib plot
-fig, ax = plt.subplots(figsize=(12, 6))
-ax.plot(df_sorted["วันที่"], y, label="Actual Closing Price")
-ax.plot(df_sorted["วันที่"], trend, label="Trend (Linear Regression)", linestyle="--", color="red")
-ax.set_title("PTT Closing Price Trend")
-ax.set_xlabel("Date")
-ax.set_ylabel("Closing Price (Baht)")
-ax.legend()
-ax.grid(True)
-plt.tight_layout()
 
-# Display Matplotlib plot in Streamlit
-st.pyplot(fig)
+#Create Funtions
+def calculate_macd(df, col='ราคาปิด'):
+    ema12 = df[col].ewm(span=12).mean()
+    ema26 = df[col].ewm(span=26).mean()
+    macd = ema12 - ema26
+    signal = macd.ewm(span=9).mean()
+    return macd, signal, macd - signal
+ 
 
-# Create Plotly interactive plot
-fig_plotly = px.line(df_sorted, x="วันที่", y="ราคาปิด", title="PTT Stock Price")
-fig_plotly.update_layout(xaxis_title="Date", yaxis_title="Price (Baht)")
-st.plotly_chart(fig_plotly, use_container_width=True)
+st.title("PTT Stock Chart")
+
+chart_type = st.selectbox("Select Indicators Chart", ["Linear Regression", "Interactive", "MACD"])
+if chart_type == "Linear Regression":
+    X = df_sorted["วันที่"].map(pd.Timestamp.toordinal).values.reshape(-1, 1)
+    y = df_sorted["ราคาปิด"].values
+    model = LinearRegression().fit(X, y)
+    trend = model.predict(X)
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(df_sorted["วันที่"], y, label="Actual Closing Price")
+    plt.plot(df_sorted["วันที่"], trend, label="Trend (Linear Regression)", linestyle="--", color="red")
+    plt.legend()
+    plt.xlabel("Date")
+    plt.ylabel("Price (THB)")
+    plt.grid(True)
+    st.pyplot(plt)
+elif chart_type == "Interactive":
+    fig = px.line(df, x='วันที่', y='ราคาปิด', title='META Stock Price')
+    fig.update_layout(xaxis_title='Date', yaxis_title='Price')
+    st.plotly_chart(fig, use_container_width=True)
+elif chart_type == "MACD":
+    macd, signal, hist = calculate_macd(df_sorted)
+    fig = go.Figure([
+        go.Bar(x=df_sorted['วันที่'], y=hist, name='Histogram', marker_color='red'),
+        go.Scatter(x=df_sorted['วันที่'], y=macd, name='MACD', line=dict(color='blue')),
+        go.Scatter(x=df_sorted['วันที่'], y=signal, name='Signal', line=dict(color='orange'))
+    ])
+    fig.update_layout(title='MACD Chart', hovermode='x unified')
+    st.plotly_chart(fig, use_container_width=True)    
