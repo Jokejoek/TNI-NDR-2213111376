@@ -5,10 +5,10 @@ This repository for ITE-417 NDR Project
 
 ## Features
 
-Interactive Data Display: Lets users view 5, 20, 30, or all rows.
-Linear Regression: Models closing price trends.
-MACD Calculation: Computes MACD, signal, and histogram for technical analysis.
-Chart Visualization: Offers Linear Regression, Interactive, or MACD charts using Matplotlib or Plotly.
+-Interactive Data Display: Lets users view 5, 20, 30, or all rows.
+-Linear Regression: Models closing price trends.
+-MACD Calculation: Computes MACD, signal, and histogram for technical analysis.
+-Chart Visualization: Offers Linear Regression, Interactive, or MACD charts using Matplotlib or Plotly.
 
 
 Data
