@@ -19,7 +19,7 @@ def parse_thai_date(date_str):
         day, month, year = date_str.split()
         month_num = thai_month_map.get(month.strip(), '01')  # Default to '01' if month not found
         year_gregorian = int(year) - 543  # Convert Buddhist year to Gregorian
-        return pd.to_datetime(f"{day}-{month_num}-{year_gregorian}", format="%d-%m-%Y")
+        return f"{year_gregorian}-{month_num}-{day}"  # Return as string in yyyy-mm-dd format
     except Exception as e:
         st.warning(f"Error parsing date {date_str}: {e}")
         return pd.NaT
@@ -31,7 +31,6 @@ except Exception as e:
     st.error(f"Error loading Excel file: {e}")
     st.stop()
 
-
 # Set column names
 df.columns = [
     "Date", "Opening Price", "Highest Price", "Lowest Price", "Average Price", "Closing Price",
@@ -39,15 +38,21 @@ df.columns = [
     "SET Index", "SET Change (%)"
 ]
 
-# Parse and convert date column
+# Parse and convert date column to yyyy-mm-dd string format
 df["Date"] = df["Date"].apply(parse_thai_date)
-
 
 # Drop rows with invalid dates or NaN values
 df = df.dropna(subset=["Date", "Closing Price"])
 
+# Convert Date column to datetime for sorting and plotting
+df["Date"] = pd.to_datetime(df["Date"], format="%Y-%m-%d")
+
 # Sort data by date
 df_sorted = df.sort_values("Date")
+
+# Convert Date back to string format yyyy-mm-dd for display
+df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
+df_sorted["Date"] = df_sorted["Date"].dt.strftime("%Y-%m-%d")
 
 # Set index starting from 1
 df.index = range(1, len(df) + 1)
@@ -67,13 +72,11 @@ st.markdown(
 )
 
 # Display title
-
-
 st.title("📊 PTT stock data analysis")
-st.subheader("First 5 rows")
+st.subheader("Display rows from Excel file ")
 
-# Select how many row to display
-howmanyrow = st.selectbox("Select how many row to Display", ["5", "20", "30","All"])
+# Select how many rows to display
+howmanyrow = st.selectbox("Select how many rows to Display", ["5", "20", "30", "All"])
 if howmanyrow == "5":
     st.dataframe(df.head(5))
 elif howmanyrow == "20":
@@ -83,11 +86,8 @@ elif howmanyrow == "30":
 elif howmanyrow == "All":
     st.dataframe(df)
 
-
-
-
 # Prepare data for Linear Regression
-X = df_sorted["Date"].map(lambda x: x.toordinal()).values.reshape(-1, 1)
+X = pd.to_datetime(df_sorted["Date"]).map(lambda x: x.toordinal()).values.reshape(-1, 1)
 y = df_sorted["Closing Price"].values
 
 # Create and fit Linear Regression model
@@ -95,35 +95,33 @@ model = LinearRegression()
 model.fit(X, y)
 trend = model.predict(X)
 
-
-#Create Funtions
+# Create Functions
 def calculate_macd(df, col='Closing Price'):
     ema12 = df[col].ewm(span=12).mean()
     ema26 = df[col].ewm(span=26).mean()
     macd = ema12 - ema26
     signal = macd.ewm(span=9).mean()
     return macd, signal, macd - signal
- 
 
 st.title("PTT Stock Chart")
 
 chart_type = st.selectbox("Select Indicators Chart", ["Linear Regression", "Interactive", "MACD"])
 if chart_type == "Linear Regression":
-    X = df_sorted["Date"].map(pd.Timestamp.toordinal).values.reshape(-1, 1)
+    X = pd.to_datetime(df_sorted["Date"]).map(pd.Timestamp.toordinal).values.reshape(-1, 1)
     y = df_sorted["Closing Price"].values
     model = LinearRegression().fit(X, y)
     trend = model.predict(X)
 
     plt.figure(figsize=(10, 5))
-    plt.plot(df_sorted["Date"], y, label="Actual Closing Price")
-    plt.plot(df_sorted["Date"], trend, label="Trend (Linear Regression)", linestyle="--", color="red")
+    plt.plot(pd.to_datetime(df_sorted["Date"]), y, label="Actual Closing Price")
+    plt.plot(pd.to_datetime(df_sorted["Date"]), trend, label="Trend (Linear Regression)", linestyle="--", color="red")
     plt.legend()
     plt.xlabel("Date")
     plt.ylabel("Price (THB)")
     plt.grid(True)
     st.pyplot(plt)
 elif chart_type == "Interactive":
-    fig = px.line(df, x='Date', y='Closing Price', title='META Stock Price')
+    fig = px.line(df, x='Date', y='Closing Price', title='PTT Stock Price')
     fig.update_layout(xaxis_title='Date', yaxis_title='Price')
     st.plotly_chart(fig, use_container_width=True)
 elif chart_type == "MACD":
@@ -134,4 +132,4 @@ elif chart_type == "MACD":
         go.Scatter(x=df_sorted['Date'], y=signal, name='Signal', line=dict(color='orange'))
     ])
     fig.update_layout(title='MACD Chart', hovermode='x unified')
-    st.plotly_chart(fig, use_container_width=True)    
+    st.plotly_chart(fig, use_container_width=True)
