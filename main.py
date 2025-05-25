@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 import plotly.express as px
-from datetime import datetime
 import plotly.graph_objects as go
 
 # Mapping Thai month abbreviations to numbers
@@ -43,6 +42,7 @@ df.columns = [
 # Parse and convert date column
 df["Date"] = df["Date"].apply(parse_thai_date)
 
+
 # Drop rows with invalid dates or NaN values
 df = df.dropna(subset=["Date", "Closing Price"])
 
@@ -67,8 +67,8 @@ st.markdown(
 )
 
 # Display title and table
-st.title("📊 วิเคราะห์ข้อมูลหุ้น PTT")
-st.subheader("ข้อมูลย้อนหลัง 5 แถวแรก")
+st.title("📊 PTT stock data analysis")
+st.subheader("First 5 rows")
 st.dataframe(df.head())
 
 
