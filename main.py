@@ -35,19 +35,19 @@ except Exception as e:
 
 # Set column names
 df.columns = [
-    "วันที่", "ราคาเปิด", "ราคาสูงสุด", "ราคาต่ำสุด", "ราคาเฉลี่ย", "ราคาปิด",
-    "เปลี่ยนแปลง", "เปลี่ยนแปลง(%)", "ปริมาณ(พันหุ้น)", "มูลค่า(ล้านบาท)",
-    "SET Index", "SET เปลี่ยนแปลง(%)"
+    "Date", "Opening Price", "Highest Price", "Lowest Price", "Average Price", "Closing Price",
+    "Change", "Change (%)", "Volume (Thousand Shares)", "Value (Million Baht)",
+    "SET Index", "SET Change (%)"
 ]
 
 # Parse and convert date column
-df["วันที่"] = df["วันที่"].apply(parse_thai_date)
+df["Date"] = df["Date"].apply(parse_thai_date)
 
 # Drop rows with invalid dates or NaN values
-df = df.dropna(subset=["วันที่", "ราคาปิด"])
+df = df.dropna(subset=["Date", "Closing Price"])
 
 # Sort data by date
-df_sorted = df.sort_values("วันที่")
+df_sorted = df.sort_values("Date")
 
 # Set index starting from 1
 df.index = range(1, len(df) + 1)
@@ -68,15 +68,15 @@ st.markdown(
 
 # Display title and table
 st.title("📊 วิเคราะห์ข้อมูลหุ้น PTT")
-st.subheader("ข้อมูลย้อนหลัง")
+st.subheader("ข้อมูลย้อนหลัง 5 แถวแรก")
 st.dataframe(df.head())
 
 
 
 
 # Prepare data for Linear Regression
-X = df_sorted["วันที่"].map(lambda x: x.toordinal()).values.reshape(-1, 1)
-y = df_sorted["ราคาปิด"].values
+X = df_sorted["Date"].map(lambda x: x.toordinal()).values.reshape(-1, 1)
+y = df_sorted["Closing Price"].values
 
 # Create and fit Linear Regression model
 model = LinearRegression()
@@ -85,7 +85,7 @@ trend = model.predict(X)
 
 
 #Create Funtions
-def calculate_macd(df, col='ราคาปิด'):
+def calculate_macd(df, col='Closing Price'):
     ema12 = df[col].ewm(span=12).mean()
     ema26 = df[col].ewm(span=26).mean()
     macd = ema12 - ema26
@@ -97,29 +97,29 @@ st.title("PTT Stock Chart")
 
 chart_type = st.selectbox("Select Indicators Chart", ["Linear Regression", "Interactive", "MACD"])
 if chart_type == "Linear Regression":
-    X = df_sorted["วันที่"].map(pd.Timestamp.toordinal).values.reshape(-1, 1)
-    y = df_sorted["ราคาปิด"].values
+    X = df_sorted["Date"].map(pd.Timestamp.toordinal).values.reshape(-1, 1)
+    y = df_sorted["Closing Price"].values
     model = LinearRegression().fit(X, y)
     trend = model.predict(X)
 
     plt.figure(figsize=(10, 5))
-    plt.plot(df_sorted["วันที่"], y, label="Actual Closing Price")
-    plt.plot(df_sorted["วันที่"], trend, label="Trend (Linear Regression)", linestyle="--", color="red")
+    plt.plot(df_sorted["Date"], y, label="Actual Closing Price")
+    plt.plot(df_sorted["Date"], trend, label="Trend (Linear Regression)", linestyle="--", color="red")
     plt.legend()
     plt.xlabel("Date")
     plt.ylabel("Price (THB)")
     plt.grid(True)
     st.pyplot(plt)
 elif chart_type == "Interactive":
-    fig = px.line(df, x='วันที่', y='ราคาปิด', title='META Stock Price')
+    fig = px.line(df, x='Date', y='Closing Price', title='META Stock Price')
     fig.update_layout(xaxis_title='Date', yaxis_title='Price')
     st.plotly_chart(fig, use_container_width=True)
 elif chart_type == "MACD":
     macd, signal, hist = calculate_macd(df_sorted)
     fig = go.Figure([
-        go.Bar(x=df_sorted['วันที่'], y=hist, name='Histogram', marker_color='red'),
-        go.Scatter(x=df_sorted['วันที่'], y=macd, name='MACD', line=dict(color='blue')),
-        go.Scatter(x=df_sorted['วันที่'], y=signal, name='Signal', line=dict(color='orange'))
+        go.Bar(x=df_sorted['Date'], y=hist, name='Histogram', marker_color='red'),
+        go.Scatter(x=df_sorted['Date'], y=macd, name='MACD', line=dict(color='blue')),
+        go.Scatter(x=df_sorted['Date'], y=signal, name='Signal', line=dict(color='orange'))
     ])
     fig.update_layout(title='MACD Chart', hovermode='x unified')
     st.plotly_chart(fig, use_container_width=True)    
