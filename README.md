@@ -13,7 +13,8 @@ This repository for ITE-417 NDR Project
   
   -Chart Visualization: Offers Linear Regression, Interactive, or MACD charts using Matplotlib or Plotly.
   
-
+# Presentation
+https://www.canva.com/design/DAGoct27XGY/wsR7ziQaZHvWXdm-UDtH1w/edit?ui=eyJEIjp7IlAiOnsiQiI6ZmFsc2V9fX0
 
 # Data
 https://www.settrade.com/th/equities/quote/ptt/overview
